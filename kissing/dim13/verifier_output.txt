@@ -1,0 +1,21 @@
+=== ZE99 baseline exact verification (Q(sqrt(3)) integer arithmetic) ===
+{
+  "ok": true,
+  "count": 1154,
+  "dim": 13,
+  "norm2": 16,
+  "n_tight_pairs": 59640,
+  "max_offdiag_unnormalized": "8",
+  "max_offdiag_unit": "1/2",
+  "max_offdiag_pair": [0, 1],
+  "distinct": true,
+  "all_offdiag_leq_bound": true,
+  "method": "Zinoviev-Ericson 1999 reproduction (exact Q(sqrt(3)))"
+}
+
+Live records used (https://cohn.mit.edu/kissing-numbers, fetched 2026-08-21):
+  dim 12 lower 841 / upper 1355
+  dim 13 lower 1154 / upper 2064
+  dim 14 lower 1932 / upper 3174
+
+This 1154 configuration is a reproduction of the live record, not an improvement.

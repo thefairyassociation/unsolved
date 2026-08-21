@@ -1,0 +1,17 @@
+{
+  "dimension": 13,
+  "count": 1154,
+  "path": "kissing/dim13/configs/ze99_1154_exact.json",
+  "method": "Zinoviev\u2013Ericson 1999 reproduction (tetrads + Steiner diamonds + axials + 48*sqrt(3) irrationals)",
+  "max_off_diagonal": "8/16 = 1/2",
+  "timestamp": "2026-08-21T03:02:26Z",
+  "verified": true,
+  "beats_live_record": false,
+  "live_record": {
+    "dimension": 13,
+    "lower": 1154,
+    "citation": "Zinoviev\u2013Ericson 1999",
+    "source": "https://cohn.mit.edu/kissing-numbers",
+    "fetched": "2026-08-21"
+  }
+}
