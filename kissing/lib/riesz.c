@@ -23,25 +23,42 @@ static void normalize(double *X){
         for(int k=0;k<n;k++) s+=x[k]*x[k];
         s=1.0/sqrt(s); for(int k=0;k<n;k++) x[k]*=s; }
 }
-/* E_s and gradient, both divided by E_s; also returns the max inner product */
+/* E_s and gradient, both divided by E_s; also returns the max inner product.
+ * Two passes: the first finds the smallest squared distance so the second can
+ * evaluate (r2/r2min)^(-s/2), whose largest term is 1.  Without that rescaling
+ * pow() overflows to +inf for large s and the whole configuration turns to NaN
+ * (which then reads as a spurious max inner product of -2). */
+static double LOGSCALE;   /* log of the rescaling factor, to compare energies across iterations */
 static double engrad(const double *X, double *G, double s, double *mx){
-    double E=0,m=-2;
+    double E=0,m=-2,r2min=1e300;
+    for(int i=0;i<N;i++){
+        const double *xi=X+(size_t)i*n;
+        for(int j=i+1;j<N;j++){
+            const double *xj=X+(size_t)j*n; double g=0;
+            for(int k=0;k<n;k++) g+=xi[k]*xj[k];
+            if(g>m) m=g;
+            double r2=2-2*g; if(r2<1e-12) r2=1e-12;
+            if(r2<r2min) r2min=r2;
+        }
+    }
+    *mx=m;
+    if(!(m>-1.5)) return -1.0;                    /* NaN guard */
     memset(G,0,sizeof(double)*(size_t)N*n);
     for(int i=0;i<N;i++){
         const double *xi=X+(size_t)i*n; double *gi=G+(size_t)i*n;
         for(int j=i+1;j<N;j++){
             const double *xj=X+(size_t)j*n; double g=0;
             for(int k=0;k<n;k++) g+=xi[k]*xj[k];
-            if(g>m) m=g;
             double r2=2-2*g; if(r2<1e-12) r2=1e-12;
-            double e=pow(r2,-s/2); E+=e;
-            double c=s*e/r2;                      /* d/dx_i of r^-s = -s r^-s-2 (xi-xj) */
+            double e=pow(r2/r2min,-s/2); E+=e;
+            double c=s*e/r2;
             double *gj=G+(size_t)j*n;
             for(int k=0;k<n;k++){ double dk=xi[k]-xj[k]; gi[k]-=c*dk; gj[k]+=c*dk; }
         }
     }
     if(E>0) for(size_t t=0;t<(size_t)N*n;t++) G[t]/=E;
-    *mx=m; return E;
+    LOGSCALE = log(E) - (s / 2) * log(r2min);   /* = log sum r^-s, scale invariant */
+    return E;
 }
 static double maxinner(const double*X){
     double m=-2;
@@ -68,6 +85,7 @@ int main(int argc,char**argv){
         double lr=0.02, Eprev=1e300;
         for(long it=0; it<per; it++){
             double mx,E=engrad(X,G,s,&mx);
+            if(E<0){ fprintf(stderr,"numerical breakdown at s=%.0f\n",s); goto done; }
             if(mx<best-1e-13){ best=mx; memcpy(B,X,sizeof(double)*(size_t)N*n);
                 if(best<=0.5+1e-13){ fprintf(stderr,"FEASIBLE s=%.0f max=%.17g\n",s,best); goto done; } }
             for(int i=0;i<N;i++){
@@ -76,10 +94,11 @@ int main(int argc,char**argv){
                 for(int k=0;k<n;k++) x[k]-=lr*(g[k]-d*x[k]);
             }
             normalize(X);
-            if(E<Eprev) lr*=1.03; else lr*=0.75;
+            double logE = LOGSCALE;
+            if(logE<Eprev) lr*=1.03; else lr*=0.75;
             if(lr<1e-11) lr=1e-11;
             if(lr>0.3) lr=0.3;
-            Eprev=E;
+            Eprev=logE;
         }
     }
 done:
