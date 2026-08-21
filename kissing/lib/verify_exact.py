@@ -70,7 +70,7 @@ def le(x, c):
 
 def verify(path, record=None, verbose=True):
     d, V, D = load(path)
-    n, N = d["dimension"], len(V)
+    n, N = d.get("dimension", len(V[0])), len(V)
     s2 = Fraction(str(d["scale2"])) if "scale2" in d else dot(V[0], V[0], D)[0]
     assert all(len(v) == n for v in V), "dimension mismatch"
     if d.get("count") is not None:
@@ -105,3 +105,48 @@ def verify(path, record=None, verbose=True):
 
 if __name__ == "__main__":
     verify(sys.argv[1], int(sys.argv[2]) if len(sys.argv) > 2 else None)
+
+
+def verify_integer(path, record=None, verbose=True, cross_check=20000):
+    """Fast exact path for all-integer coordinates.
+
+    numpy int64 products are EXACT (not floating point) provided no overflow;
+    we prove the bound |<u,v>| <= n * max|c|^2 < 2^63 before using them, and
+    independently recompute a random sample of entries with Python big ints.
+    """
+    import json, random
+    import numpy as np
+    d = json.load(open(path))
+    rows = d["vectors"]
+    d.setdefault("dimension", len(rows[0]))
+    A = np.array([[int(str(c)) for c in v] for v in rows], dtype=np.int64)
+    N, n = A.shape
+    mx = int(np.abs(A).max())
+    bound = n * mx * mx
+    assert bound < 2 ** 62, f"int64 overflow risk: bound {bound}"
+    s2 = int(d["scale2"]) if "scale2" in d else int((A[0] * A[0]).sum())
+    assert (A * A).sum(1).min() == s2 and (A * A).sum(1).max() == s2, "norms differ"
+    G = A @ A.T
+    np.fill_diagonal(G, -(10 ** 9))
+    worst = int(G.max())
+    half2 = s2                                   # compare 2*<u,v> against s2
+    assert 2 * worst <= half2, f"max off-diagonal {worst} exceeds {s2}/2"
+    assert len({tuple(r) for r in A.tolist()}) == N, "duplicate vectors"
+    rng = random.Random(12345)
+    for _ in range(cross_check):                 # independent big-int check
+        i = rng.randrange(N); j = rng.randrange(N)
+        if i == j: continue
+        g = sum(int(a) * int(b) for a, b in zip(rows[i], rows[j]))
+        assert 2 * g <= s2, f"pair ({i},{j}) inner product {g}"
+        assert g == int(G[i, j]), "int64 / big-int mismatch"
+    rec = RECORDS.get(n) if record is None else record
+    res = {"ok": True, "dimension": n, "count": N, "scale2": s2, "field": "Q (integer)",
+           "distinct": True, "max_offdiag_raw": worst,
+           "max_offdiag_unit": str(Fraction(worst, s2)),
+           "tight_pairs": int((G == s2 // 2).sum() // 2) if s2 % 2 == 0 else None,
+           "record": rec, "beats_record": N > rec,
+           "overflow_bound": bound, "bigint_cross_checks": cross_check,
+           "method": d.get("method", "")}
+    if verbose:
+        print(json.dumps(res, indent=2))
+    return res

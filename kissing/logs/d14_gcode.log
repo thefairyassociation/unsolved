@@ -1,0 +1,3 @@
+seed=101 dimV=6 supports=4 weight8=256 total=620 (below 1932)
+seed=101 dimV=6 supports=8 weight8=512 total=876 (below 1932)
+seed=101 dimV=6 supports=13 weight8=832 total=1196 (below 1932)
