@@ -1,0 +1,10 @@
+{
+  "dim": 12,
+  "count": 840,
+  "method": "clebsch_48system_K6_bridges",
+  "max_offdiag": "1/2",
+  "verified": "exact_qsqrt2",
+  "config": "configs/clebsch840.json",
+  "live_record_lower": 841,
+  "beaten": false
+}

@@ -1,0 +1,10 @@
+# kissing/dim12/progress.log — append-only
+# ISO-8601 UTC | event | details
+
+2026-08-21T02:44:00Z LIVE_RECORD dim=12 lower=841 upper=1355 source=https://cohn.mit.edu/kissing-numbers refs=[24]=Takhanov-Assylbekov-Yun arXiv:2606.18984 ; [10]=de Laat-Leijenhorst 2024
+2026-08-21T02:45:00Z NOTE reproducing 841 is baseline not progress; success requires verified count>841 in exact arithmetic
+2026-08-21T02:53:42Z START branch=cursor/kissing-dim12-de82 workspace=/workspace/kissing/dim12
+2026-08-21T02:58:00Z VERIFY clebsch840 count=840 max_offdiag=1/2 field=Q(sqrt(2)) pairs=352380 ok=true (baseline, not a record)
+2026-08-21T02:59:00Z VERIFY K12_hexacode count=756 max_offdiag<=1/2 field=Q(sqrt(3)) ok=true
+2026-08-21T02:59:30Z NOTE hexacode generator initially had d_min=2; replaced by Conway–Sloane parametric form (a,b,c,a+b+c,ω²a+ωb+c,ωa+ω²b+c)
+2026-08-21T03:03:22Z K12_MINIMA verified count=756 exact_Qsqrt3 ok=True
