@@ -5,8 +5,8 @@ cd /home/user/unsolved
 d=$1; base=$2; N=$3; tag=$4; s0=$5
 SP=/tmp/claude-0/-home-user-unsolved/153d4bbc-6a4f-55aa-a990-7da3460d88ca/scratchpad
 for i in $(seq 0 20000); do
-  s=$((s0+i)); k=$(( (RANDOM % 30) + 1 ))
-  python3 kissing/lib/shake.py "$base" $k $s $SP/shake_$tag.txt >/dev/null 2>&1
+  s=$((s0+i)); k=$(( (RANDOM % 8) + 1 ))
+  python3 kissing/lib/shake2.py "$base" $k $s $SP/shake_$tag.txt >/dev/null 2>&1
   rows=$(wc -l < $SP/shake_$tag.txt)
   if [ "$rows" != "$N" ]; then echo "$(date -u +%FT%TZ) BADROWS $rows" >> kissing/logs/shake_$tag.log; continue; fi
   r=$(./kissing/lib/opt2 $d $N 120000 $s $SP/shake_$tag.txt 2>/dev/null)

@@ -86,8 +86,16 @@ Three independent negative checks:
   plus one point, over many restarts, converges to max inner product
   **0.33335 > 1/3** for 169 points.
 
-So 1154 can only be beaten in this framework by *moving several points at once*,
-and the framework itself is capped: `2 + K(12) + 2*K(12,1/3) <= 2 + 841 + 336 = 1179`.
+So 1154 can only be beaten in this framework by *moving several points at once*.
+And the framework has little headroom **given the current records**: with the best
+known values `K(12) = 841` and `K(12,1/3) = 168` it yields at most
+`2 + 841 + 2*168 = 1179`, so pushing a pole-based layered construction past that
+would first require improving one of those two numbers. (This is a ceiling
+relative to today's records, not a proof: the Delsarte LP bounds computed by
+`lib/lpbound.py` are much weaker — `M(12,1/2) <= 1416.1`, `M(12,1/3) <= 257.5`,
+giving only `<= 1933`. That code reproduces `M(8,1/2) = 240` exactly and
+`M(13,1/2) <= 2233.6`, the classical Odlyzko–Sloane value, so the machinery is
+sound; the bounds themselves are simply not tight in this range.)
 
 **A calibration worth recording.** The same two tests applied to configurations
 whose record *was* subsequently broken:
