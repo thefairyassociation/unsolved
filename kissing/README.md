@@ -131,14 +131,45 @@ valid 1932 from scratch** out of `V` + supports + solved coset representatives:
   `a in V^perp` supported inside `S & T` — an **F_2 linear system**, solved
   exactly by elimination plus a search over its solution space.
 
-**Ganzhinov's 1568 is maximal**: `lib/addable.c` checks all 768768 weight-8
-candidates against it and finds **0** addable (0.7 s). And no 50th support can join
-his 49 — the breakdown over all 3003 8-subsets (`dim14/why_no_50th.py`) is
-2392 blocked because some `t=5` pair has `V|_X` equal to all of `F_2^X`,
-455 not good for `V`, 107 meeting a support in >= 7, 0 addable.
-Since the max support family with intersections in {2,3,4,6} is exactly 49
-(`lib/clique.c` finds 49, matching his design), beating 1568 requires either
-`t=5` pairs — hence a different `V` — or `dim V = 6` with >= 25 supports.
+**The 49 supports are exactly the Fano-plane product.** Splitting the 14
+coordinates 7+7, take in each half the seven complements of the lines of the
+Fano plane (lines `{0,1,3}+i mod 7`); the 49 supports are all 49 products
+`P u Q`. Reproduced independently in `dim14/fano50c.py`: the same 49 sets, the
+same intersection profile (4 for 882 pairs, 6 for 294).
+
+**Which global codes work is exactly characterisable.** With `S^c = L u L'` a
+pair of Fano lines, goodness of `V` for the whole design is
+
+> `def(v_A) + def(v_B) >= 2` for every nonzero `v = (v_A, v_B)` in `V`,
+> where `def(x) = wt(x) - max_L |x & L|` over the seven Fano lines.
+
+Ganzhinov's `V` satisfies it (weights 6^7 7^16 8^7 14^1; the all-ones word is
+present, which is exactly antipodality of the vector set). Griesmer caps the
+minimum weight of a `[14,5]` code at 6, and containing `1^14` then forces every
+other codeword into weight 6..8 — so the admissible `V` form a small explicit
+family.
+
+**Ganzhinov's 1932 is maximal, and the design is not extendable.**
+
+* `lib/addable.c` checks all 768768 weight-8 candidates against the 1568 and
+  finds **0** addable (0.7 s).
+* Over all 3003 8-subsets (`dim14/why_no_50th.py`), the obstruction to a 50th
+  support with *his* `V` splits as 2392 blocked because some `t=5` pair has
+  `V|_X` equal to all of `F_2^X`, 455 not good for `V`, 107 meeting a support in
+  >= 7, **0 addable**.
+* `dim14/fano50c.py` enumerated **836 distinct admissible codes `V`**; 76 of them
+  give a consistent 49-support coset system, and **none admits a 50th support**.
+  (A 50th would give 1600 weight-8 vectors and 1964 > 1932.)
+* That blocker does not depend on the sign code chosen for the new support:
+  disjointness needs `U|_X + V|_X != F_2^X`, and where `V|_X` is already all of
+  `F_2^X` no `U` can help — matching the exhaustive `addable` result.
+
+Since the maximum support family with intersections in {2,3,4,6} is exactly 49
+(`lib/clique.c` finds 49, matching the design), beating 1568 needs `t=5` pairs —
+hence a different `V` — or `dim V = 6` with >= 25 supports. Cliques of up to
+**72** supports do exist in the structural graph for other minimum-weight-6
+codes, but the F_2 coset system then collapses: the greedy consistent subfamily
+stops at 11-13 supports (352-416 weight-8 vectors).
 
 ### 3. The norm-8 shell of Z^13 cannot reach 1154 — ruled out
 
@@ -186,7 +217,8 @@ they gain.
 | 7 | Global-linear-code framework in dim 13, dim V in {4,5,6,7} | best Gram-verified 760 |
 | 8 | Coordinate and hyperplane sections of Ganzhinov's 1932 | 984 |
 | 9 | Extending Ganzhinov's 1932 (dim 14) | 1568 weight-8 is maximal (0 of 768768 addable); 0 of 3003 supports addable |
-| 10 | dim-14 global-code search over random V | ongoing, best so far well below 1932 |
+| 10 | dim-14 global-code search over minimum-weight-6 codes V | structural cliques up to 72 supports, but F_2 coset consistency collapses to 11-13 |
+| 10b | dim-14 Fano-design code enumeration (836 admissible V) | none admits a 50th support |
 | 11 | Numerical continuation from ZE99 + 1 point, and remove-k/add-(k+1) shaking | ongoing; no feasible 1155 found |
 | 12 | Highly symmetric (group-orbit) configurations in R^13 from PSL(2,13) / PGL(2,13) on the 13-dimensional standard representation | implemented (`dim13/v2/orbits.py`); orbit optimisation did not reach max cos <= 1/2 |
 

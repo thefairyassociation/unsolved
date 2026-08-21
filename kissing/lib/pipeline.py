@@ -7,6 +7,7 @@ from gcode import Ctx, Elim, pair_rows, solve_signs, build, check, code_words, p
 CLQ = os.path.abspath('kissing/lib/gclique')
 
 def structural_graph(ctx, cap=4000):
+    """edges = compatible support pairs; cap only guards against huge graphs"""
     G = ctx.good
     if len(G) > cap:
         G = random.sample(G, cap)

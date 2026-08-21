@@ -60,8 +60,13 @@ class Ctx:
 
     def lams(self, X):
         """all functionals for the pair-set X (as lambda coordinates)"""
-        full = (1 << self.n) - 1
-        return [self.coord[a] for a in self.perp if a and not (a & (full ^ X))]
+        c = getattr(self, '_lamcache', None)
+        if c is None: c = self._lamcache = {}
+        v = c.get(X)
+        if v is None:
+            full = (1 << self.n) - 1
+            v = c[X] = [self.coord[a] for a in self.perp if a and not (a & (full ^ X))]
+        return v
 
 class Elim:
     __slots__ = ('piv',)
@@ -91,18 +96,30 @@ class Elim:
             y[h] = s
         return y
 
-def pair_rows(ctx, F, S):
-    """rows forced by adding support S to family F; None if structurally bad"""
+def pair_rows(ctx, F, S, rng=None):
+    """Rows forced by adding support S to family F; None if structurally bad.
+
+    A pair whose annihilator is 1-dimensional gives one linear equation.  When it
+    is larger the requirement is a disjunction ("some functional separates the two
+    cosets"); passing an rng picks one functional at random and imposes it as an
+    equation, which is a sufficient - and far more tractable - condition."""
     rows = []; k = ctx.k; j = len(F)
     for i, T in enumerate(F):
         X = S & T; t = ctx.PCT[X]
         if t <= 4: continue
         if t >= 7 or ctx.cnt[X] < 1: return None
         if ctx.cnt[X] == 1:
-            lam = int(ctx.lamx[X]); row = 0
-            for b in range(k):
-                if lam >> b & 1: row ^= (1 << (i * k + b)) ^ (1 << (j * k + b))
-            rows.append(row)
+            lam = int(ctx.lamx[X])
+        elif rng is not None:
+            L = ctx.lams(X)
+            if not L: return None
+            lam = rng.choice(L)
+        else:
+            continue
+        row = 0
+        for b in range(k):
+            if lam >> b & 1: row ^= (1 << (i * k + b)) ^ (1 << (j * k + b))
+        rows.append(row)
     return rows
 
 def grow(ctx, rng, order=None, limit=None):

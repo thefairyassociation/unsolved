@@ -12,3 +12,14 @@
 2026-08-21T23:20:15Z | 12 | numeric | K(12,1/3): 169-point 1/3-code search converges to 0.33335 > 1/3 over many restarts => 168 appears optimal
 2026-08-21T23:20:20Z | 14 | maximality | Ganzhinov 1568 weight-8 set: 0 of 768768 candidates addable; 0 of 3003 supports addable to his 49 (2392 blocked by cnt[X]=0 on a t=5 pair, 455 not good for V, 107 meet a support in >=7)
 2026-08-21T23:20:25Z | 12,13,14 | jamming+holes | 840: 0.8164 jammed; 1154: 0.9014 jammed; 1932: 0.9354 jammed. The 840 was nonetheless beaten (841) by collective deformation => these tests do not certify optimality
+2026-08-21T23:09:13Z | 14 | gcode-search | seed=203 dimV=5 supports=12 weight8=384 total=748 (below 1932)
+2026-08-21T23:09:16Z | 14 | gcode-search | seed=201 dimV=5 supports=11 weight8=352 total=716 (below 1932)
+2026-08-21T23:09:18Z | 14 | gcode-search | seed=202 dimV=5 supports=12 weight8=384 total=748 (below 1932)
+2026-08-21T23:09:41Z | 14 | gcode-search | seed=201 dimV=5 supports=12 weight8=384 total=748 (below 1932)
+2026-08-21T23:09:55Z | 14 | gcode-search | seed=202 dimV=5 supports=13 weight8=416 total=780 (below 1932)
+2026-08-21T23:13:20Z | 14 | gcode-search | seed=203 dimV=5 supports=13 weight8=416 total=780 (below 1932)
+2026-08-21T23:55:00Z | 14 | fano-design | Reproduced Ganzhinov's 49 supports exactly as the Fano-plane product: 14 = 7+7, blocks = complements of the 7 Fano lines in each half, supports = all 49 products; pair intersections 4 (882) and 6 (294) match.
+2026-08-21T23:55:05Z | 14 | code-characterisation | Goodness of a global code V for that design is exactly def(v_A)+def(v_B) >= 2 where def(x) = wt(x) - max_L |x & L| over Fano lines. Ganzhinov's V (weights 6^7 7^16 8^7 14^1) satisfies it.
+2026-08-21T23:55:10Z | 14 | fano50 | Enumerated 836 distinct antipodal (1^14 in V) minimum-weight-6 codes V inside that characterisation; 76 give a consistent 49-support coset system; ZERO admit a 50th support. A 50th would give 1600 weight-8 + 364 = 1964 > 1932.
+2026-08-21T23:55:15Z | 14 | argument | For a would-be extra support S, the blocker "V|_(S&S_i) = F_2^(S&S_i) for some t in {5,6} pair" is independent of whatever sign code is put on S (disjointness needs U|X + V|X != F_2^X, and V|X alone is already everything). Consistent with addable.c: 0 of 768768 weight-8 vectors can join the 1568.
+2026-08-21T23:19:01Z | 14 | gcode-search | seed=204 dimV=5 supports=11 weight8=352 total=716 (below 1932)
