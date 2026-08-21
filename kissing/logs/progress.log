@@ -1,0 +1,5 @@
+# kissing/logs/progress.log — append-only: UTC | dim | method | count | result
+2026-08-21T20:28:20Z | 13 | infra | - | exact verifier written; ZE99 1154 re-verified exactly in Q(sqrt(3)), max offdiag 1/2, 59640 tight pairs
+2026-08-21T20:28:20Z | 14 | analysis | 1932 | Ganzhinov integer model = 364 D14 roots + 49 supports x 32 signs; 14=7+7, support pairs meet in 4 (882) or 6 (294); sign codes are affine [8,5,2] with 4 weight-2 words
+2026-08-21T21:01:11Z | 13 | gc2 | seed=1 d=5 supports=7 weight8=224 total=536 (below record 1154)
+2026-08-21T21:20:00Z | 13 | model-analysis | norm-8 Z^13 shell (312 D-roots + weight-8): in [13] two 8-sets meet in >=3 and at most 3 supports pairwise meet in <=4, so essentially every support pair is a FORCED F_2 equation on the coset reps. With dim V = d, k = 13-d unknowns per support, consistency needs C(m,2) <~ k*m, i.e. m <~ 2k+1. Max reach: d=5,m<=17 -> 856; d=6,m<=15 -> 1272 (unreachable in practice, search reaches m~7); d=7 forces all pairs t<=4 -> m<=3 -> 696. Best found 760. Model does NOT reach 1154. RULED OUT.

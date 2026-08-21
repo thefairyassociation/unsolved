@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "beats_record": false,
+  "n": 1932,
+  "dim": 14,
+  "norm2": 8,
+  "max_offdiag_inner": 4,
+  "max_cosine_exact": "1/2",
+  "max_allowed_inner": "4",
+  "violations": 0,
+  "live_record": 1932,
+  "diagonal_ones_after_normalization": true,
+  "distinct": true,
+  "arithmetic": "exact integer Gram (Python/numpy int64)"
+}
+LIVE RECORD used: 1932 from https://cohn.mit.edu/kissing-numbers (upper 3174)
+GEOM OK: n=1932 distinct unit vectors in R^14, off-diagonal inner products <= 1/2.
+Does not beat the live record (reproducing the record is baseline, not progress).
+{
+  "ok": true,
+  "beats_record": false,
+  "n": 1932,
+  "dim": 14,
+  "norm2": 8,
+  "max_offdiag_inner": 4,
+  "max_cosine_exact": "1/2",
+  "max_allowed_inner": "4",
+  "violations": 0,
+  "live_record": 1932,
+  "diagonal_ones_after_normalization": true,
+  "distinct": true,
+  "arithmetic": "exact integer Gram (Python/numpy int64)"
+}
+LIVE RECORD used: 1932 from https://cohn.mit.edu/kissing-numbers (upper 3174)
+GEOM OK: n=1932 distinct unit vectors in R^14, off-diagonal inner products <= 1/2.
+Does not beat the live record (reproducing the record is baseline, not progress).

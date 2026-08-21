@@ -1,0 +1,11 @@
+{
+  "core": 72,
+  "same_color_count": 648,
+  "all_2plus2_count": 648,
+  "best": {
+    "ok": true,
+    "count": 648,
+    "max_offdiag": "1/2"
+  },
+  "seconds": 1.09
+}
