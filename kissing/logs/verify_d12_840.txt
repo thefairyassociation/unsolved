@@ -1,7 +1,14 @@
-Traceback (most recent call last):
-  File "/home/user/unsolved/kissing/lib/verify_exact.py", line 107, in <module>
-    verify(sys.argv[1], int(sys.argv[2]) if len(sys.argv) > 2 else None)
-  File "/home/user/unsolved/kissing/lib/verify_exact.py", line 73, in verify
-    n, N = d["dimension"], len(V)
-           ~^^^^^^^^^^^^^
-KeyError: 'dimension'
+{
+  "ok": true,
+  "dimension": 12,
+  "count": 840,
+  "scale2": "1",
+  "field": "Q(sqrt(2))",
+  "distinct": true,
+  "max_offdiag_raw": "1/2",
+  "max_offdiag_unit": "1/2",
+  "tight_pairs": 34560,
+  "record": 841,
+  "beats_record": false,
+  "method": "clebsch_48system_K6_bridges"
+}

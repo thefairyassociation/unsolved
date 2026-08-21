@@ -1,1 +1,14 @@
-{"n": 1932, "dim": 14, "live_record": 1932, "live_upper": 3174, "live_record_url": "https://cohn.mit.edu/kissing-numbers", "lower_bound_citation": "https://arxiv.org/abs/2207.08266", "upper_bound_citation": "https://doi.org/10.1007/s12532-024-00264-w", "family": "ganzhinov_baseline", "notes": "Reproduced Ganzhinov 1932 in Z^14, squared length 8, max inner product 4. Baseline, not progress.", "verified_exact": true, "beats_record": false}
+{
+  "dimension": 14,
+  "count": 1932,
+  "verified_exactly": true,
+  "field": "Q (integer, norm^2 = 8)",
+  "max_off_diagonal": "4/8 = 1/2",
+  "tight_pairs": 159264,
+  "path": "kissing/dim14/configs/ganzhinov_1932_exact.json",
+  "method": "Ganzhinov 2025 reproduction: 364 D14 roots + 1568 weight-8 vectors on 49 Fano-product supports",
+  "beats_live_record": false,
+  "live_record": 1932,
+  "note": "equals the record; the 1568 weight-8 set is maximal (0 of 768768 addable)",
+  "timestamp": "2026-08-21T23:25:25Z"
+}
