@@ -317,9 +317,14 @@ The three things that look most worth attacking next, in order:
 
 1. **A better optimiser.** The calibration above is the honest bottleneck: the
    published dim-12 method reaches 0.4999999 on a case where this code reaches
-   0.52. An L-BFGS inner solve (rather than gradient descent with a backtracking
+   0.505. An L-BFGS inner solve (rather than gradient descent with a backtracking
    line search) plus many more restarts would make the dim-13 numerical evidence
-   worth something either way.
+   worth something either way. **Start with BLAS, not with the algorithm**: on
+   this box numpy/BLAS computes the 1155x13 Gram matrix 263 times a second on one
+   thread (9.1 GFlop/s), while the hand-rolled loops in `riesz.c` manage about 48
+   Gram-equivalents a second — 5.5x slower on one core, and nothing is threaded
+   across the four. That is ~19x for free, plus another 2x from caching the Gram
+   matrix between the two passes inside `engrad`.
 2. **Dimension 14 with `dim V = 6`.** 25 supports would give 1600 weight-8
    vectors and 1964 > 1932. Structural cliques of up to 72 supports exist for
    minimum-weight-6 codes; what collapses is the F_2 coset system. A smarter
