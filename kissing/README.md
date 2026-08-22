@@ -227,7 +227,8 @@ Both are driven by `lib/shake2.py`, which removes k points and re-inserts k+1 at
 the **deepest holes** of what remains (found by LP) rather than at random; that
 change alone moved the dimension-13 results from max inner product 0.69 to 0.51.
 
-Best reached so far for 1155 points in R^13: **0.5088** (needs <= 0.5).
+Best reached so far for 1155 points in R^13: **0.5088** (needs <= 0.5), over
+several hundred shake-and-relax rounds with k in 1..8 removed points.
 
 **But the calibration says not to read much into that.** Seeding the same
 machinery with the classical dimension-12 840 plus one extra point — a case where
@@ -283,3 +284,36 @@ optimiser's own claim.
 Benchmarks that pin the machinery down: `mis8` loads Ganzhinov's 1568 with zero
 violations; `gcode` rebuilds a valid 1932 from `V` + supports + solved cosets;
 `clique` returns exactly 49 for the dim-14 {4,6} support design and 21 for dim 13.
+
+## Still running when this was written
+
+Four searches are left going, all of which write to `logs/` and check every
+candidate through the exact verifier before claiming anything:
+
+* `lib/shakeloop.sh` — dim-13 shake-and-relax from ZE99 (penalty continuation);
+* `lib/rieszloop.sh` — the same with Riesz-energy continuation;
+* `lib/run_fano.sh` — dim-14 enumeration of admissible global codes for the
+  Fano-product design (8000+ codes so far, 0 extensions);
+* `lib/calib2.sh` — the dim-12 841 calibration with the line-search optimiser.
+
+A success would appear as a `logs/HIT_*.txt` file; none has been written.
+
+## If someone picks this up
+
+The three things that look most worth attacking next, in order:
+
+1. **A better optimiser.** The calibration above is the honest bottleneck: the
+   published dim-12 method reaches 0.4999999 on a case where this code reaches
+   0.52. An L-BFGS inner solve (rather than gradient descent with a backtracking
+   line search) plus many more restarts would make the dim-13 numerical evidence
+   worth something either way.
+2. **Dimension 14 with `dim V = 6`.** 25 supports would give 1600 weight-8
+   vectors and 1964 > 1932. Structural cliques of up to 72 supports exist for
+   minimum-weight-6 codes; what collapses is the F_2 coset system. A smarter
+   joint search over (code, support family, cosets) — rather than clique-then-
+   check — is the obvious next step.
+3. **Non-global sign codes.** The whole framework here assumes every support
+   carries a coset of one global linear code `V`, which is true of Ganzhinov's
+   configuration but need not be true of an optimal one. The general condition
+   for a pair is only `U_i|_X + U_j|_X != F_2^X`; dropping the global-`V`
+   assumption enlarges the search space considerably.
