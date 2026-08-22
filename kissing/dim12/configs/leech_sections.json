@@ -1,0 +1,21 @@
+{
+  "golay": {
+    "n": 4096,
+    "weights": {
+      "0": 1,
+      "8": 759,
+      "12": 2576,
+      "16": 759,
+      "24": 1
+    },
+    "min_nonzero": 8
+  },
+  "leech_typeA": 97152,
+  "leech_typeB": 98304,
+  "coord_section_12": 0,
+  "coord_maxIP_float": null,
+  "diagonal_section": 0,
+  "diagonal_maxIP_float": null,
+  "seconds": 0.97,
+  "note": "Coordinate/diagonal sections of Leech; counts expected << 841."
+}

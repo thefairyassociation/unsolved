@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "dimension": 12,
+  "count": 840,
+  "scale2": "1",
+  "field": "Q(sqrt(2))",
+  "distinct": true,
+  "max_offdiag_raw": "1/2",
+  "max_offdiag_unit": "1/2",
+  "tight_pairs": 34560,
+  "record": 841,
+  "beats_record": false,
+  "method": "clebsch_48system_K6_bridges"
+}

@@ -1,0 +1,14 @@
+{
+  "hits": {
+    "6d_wt4_half": 0,
+    "6d_wt6_1/sqrt6": 0,
+    "6d_wt5": 0,
+    "6d_wt3": 0,
+    "two_half_four_1sqrt8": 0,
+    "random_in_cube": 0
+  },
+  "random_tried_in_cube": 951,
+  "random_best_maxIP": 0.8176081824720357,
+  "seconds": 0.79,
+  "note": "Zero hits means the 60-point 6D block cannot be enlarged inside the bridge cube."
+}
