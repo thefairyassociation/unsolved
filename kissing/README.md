@@ -230,13 +230,24 @@ change alone moved the dimension-13 results from max inner product 0.69 to 0.51.
 Best reached so far for 1155 points in R^13: **0.5088** (needs <= 0.5), over
 several hundred shake-and-relax rounds with k in 1..8 removed points.
 
-**But the calibration says not to read much into that.** Seeding the same
-machinery with the classical dimension-12 840 plus one extra point — a case where
-a solution provably exists, since Takhanov et al. reached 0.499999937751 — it
-gets only about **0.52**. So the optimiser here is materially weaker than the
-published state of the art, and a dimension-13 near-miss at 0.5088 is **not**
-evidence that 1155 points do not exist. The structural results above stand on
-their own; the numerical ones do not.
+**But the calibration says not to read much into that.** Seed the same machinery
+with the classical dimension-12 840 plus one extra point — a case where a solution
+provably exists, since Takhanov et al. reached 0.499999937751:
+
+| optimiser | dim 12, N = 841 (solution exists) | dim 13, N = 1155 (unknown) |
+| --- | --- | --- |
+| penalty continuation, crude step rule | ~0.52 | 0.5088 |
+| Riesz continuation + Armijo line search | **0.50519** | (running) |
+
+The two columns are close, and the left one is a case where the answer is *yes*.
+So the optimiser here simply cannot resolve the question: a dimension-13
+near-miss at 0.5088 is **not** evidence that 1155 points fail to exist. The
+structural results above stand on their own; the numerical ones do not.
+
+A second flaw the calibration exposed: with a seed file the Riesz run was fully
+deterministic, so two different "restarts" returned bit-identical answers
+(0.50518677246961574 twice). Restarts now jitter the starting configuration
+(`KISS_JIT`, default 0.03), which is what makes multi-seed search mean anything.
 
 A related bug worth recording: `pow(r2, -s/2)` overflows to `+inf` at large
 exponents, turning the configuration into `NaN`, whereupon the maximum inner

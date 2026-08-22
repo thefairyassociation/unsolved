@@ -93,7 +93,12 @@ int main(int argc,char**argv){
            *B=malloc(sizeof(double)*(size_t)N*n);
     for(size_t i=0;i<(size_t)N*n;i++) X[i]=nrand();
     if(argc>5){ FILE*f=fopen(argv[5],"r"); if(!f){perror("seed");return 1;}
-        size_t c=0; while(c<(size_t)N*n && fscanf(f,"%lf",&X[c])==1) c++; fclose(f); }
+        size_t c=0; while(c<(size_t)N*n && fscanf(f,"%lf",&X[c])==1) c++; fclose(f);
+        /* Without this the run is deterministic given the seed file, so different
+         * seeds explore nothing.  Jitter the starting configuration (KISS_JIT). */
+        double jit=0.03; { const char*e=getenv("KISS_JIT"); if(e) jit=atof(e); }
+        if(jit>0) for(size_t t=0;t<(size_t)N*n;t++) X[t]+=jit*nrand();
+    }
     normalize(X);
     double best=maxinner(X); memcpy(B,X,sizeof(double)*(size_t)N*n);
     /* continuation schedule: start near the logarithmic energy (s -> 0) and

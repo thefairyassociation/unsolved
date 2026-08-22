@@ -34,3 +34,5 @@
 2026-08-22T02:00:00Z | 14 | fano50-final | 54664 admissible global codes V enumerated for the Fano-product 49-support design; 4614 give a consistent coset system; ZERO admit a 50th support (which would be 1964 > 1932).
 2026-08-22T02:00:05Z | 13 | numeric-final | best max inner product for N=1155 in R^13 over all shake-and-relax rounds: 0.50875337 (needs <= 0.5). No HIT files written in any search.
 2026-08-22T02:00:10Z | all | RESULT | No record beaten. Best exactly verified: dim 12 = 840, dim 13 = 1154, dim 14 = 1932 - all reproductions of known constructions.
+2026-08-22T02:30:00Z | 12 | calibration-2 | Riesz continuation with Armijo line search reaches 0.50519 for dim-12 N=841 (from the classical 840 + 1), improving on ~0.52 but still short of the published 0.4999999. Compare dim-13 N=1155 at 0.5088: the two are close and the dim-12 case is known to be solvable, so the optimiser cannot resolve dim 13 either way.
+2026-08-22T02:30:05Z | all | bug-2 | riesz was deterministic when given a seed file (two seeds returned bit-identical 0.50518677246961574). Added KISS_JIT jitter of the starting configuration so restarts actually diversify.
