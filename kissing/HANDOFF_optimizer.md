@@ -9,7 +9,7 @@ for one measurable reason:
 
 > On dimension 12 with N = 841 — a case where a solution **provably exists**,
 > because Takhanov–Assylbekov–Yun reached max inner product 0.499999937751 —
-> the optimisers in this repo reach only **0.505**.
+> the best optimiser run in this repo reaches **0.500477238629** (independently recomputed), still above the required threshold.
 
 So when the same machinery reaches 0.5088 for 1155 points in dimension 13, that
 says nothing about whether 1155 points exist. Closing that gap is the job.
@@ -29,11 +29,12 @@ Scoreboard so far (all on this exact seed):
 | configuration | dim-12 N=841 |
 | --- | --- |
 | Takhanov et al. (published, the target) | 0.499999937751 |
-| old hand-rolled gradient descent + Armijo | **0.50519** ← best here |
+| old hand-rolled gradient descent + Armijo | 0.50519 |
 | BLAS + L-BFGS branch, 18 short restarts | 0.51123 |
 | BLAS + L-BFGS branch, equal wall clock | 0.51113 |
 | BLAS + L-BFGS branch, finer homotopy (`KISS_SMUL=1.04`) | 0.51392 |
-| BLAS engine + `KISS_SOLVER=gd` | **not yet measured — do this first** |
+| BLAS engine + `KISS_SOLVER=gd` | 0.509619958637 |
+| BLAS engine + published-schedule Adam | **0.500477238629** ← best here, still not feasible |
 
 Only after 841 goes below 0.5 is it worth re-running dimension 13 at N = 1155.
 
@@ -50,7 +51,7 @@ Only after 841 goes below 0.5 is it worth re-running dimension 13 at N = 1155.
 
 Do not redo that work. Build on it.
 
-## The hypothesis to test first (cheap, and it may be the whole answer)
+## Cheap GD hypothesis — tested, negative
 
 The L-BFGS inner solve appears to be a **regression**, not an improvement. Every
 variant of it lands worse than the crude gradient descent it replaced, and the
@@ -62,10 +63,11 @@ The likely reason: the Riesz minimiser at finite exponent `s` is **not** a
 best-packing configuration. A sloppy, under-converged descent wanders and
 explores; a good inner solver converges precisely to the wrong object.
 
-`KISS_SOLVER=gd` is already in the code. Run the fast engine with it. If that
-alone beats 0.50519, most of the problem is solved and the rest is tuning the
-homotopy schedule (`KISS_S0`, `KISS_SMUL`, `KISS_SMAX`) and the restart jitter
-(`KISS_JIT`).
+`KISS_SOLVER=gd` was run on the fixed 120000/51 hypercube benchmark and reached
+0.509619958637, independently recomputed from the output file. It improves on
+L-BFGS but does not recover the old 0.50519 baseline. A manifold-Adam port of the
+published exponent/LR schedule reached 0.500477238629. See
+`kissing/CALIBRATION_optimizer.md` for exact measurements and caveats.
 
 ## Traps — please read, two of these already produced false results
 
