@@ -165,8 +165,9 @@ family.
   support with *his* `V` splits as 2392 blocked because some `t=5` pair has
   `V|_X` equal to all of `F_2^X`, 455 not good for `V`, 107 meeting a support in
   >= 7, **0 addable**.
-* `dim14/fano50c.py` enumerated **836 distinct admissible codes `V`**; 76 of them
-  give a consistent 49-support coset system, and **none admits a 50th support**.
+* `dim14/fano50c.py` enumerated **127190 distinct admissible codes `V`**; 10978 of
+  them give a consistent 49-support coset system, and **none admits a 50th
+  support**.
   (A 50th would give 1600 weight-8 vectors and 1964 > 1932.)
 * That blocker does not depend on the sign code chosen for the new support:
   disjointness needs `U|_X + V|_X != F_2^X`, and where `V|_X` is already all of
@@ -304,7 +305,7 @@ candidate through the exact verifier before claiming anything:
 * `lib/shakeloop.sh` — dim-13 shake-and-relax from ZE99 (penalty continuation);
 * `lib/rieszloop.sh` — the same with Riesz-energy continuation;
 * `lib/run_fano.sh` — dim-14 enumeration of admissible global codes for the
-  Fano-product design (**54664** codes enumerated, **4614** of them giving a
+  Fano-product design (**127190** codes enumerated, **10978** of them giving a
   consistent coset system, **0** extensions);
 * `lib/calib2.sh` — the dim-12 841 calibration with the line-search optimiser.
 
