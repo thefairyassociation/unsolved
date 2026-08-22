@@ -21,6 +21,7 @@
  *
  * Env: KISS_JIT, KISS_S0, KISS_SMUL, KISS_SMAX, KISS_THREADS, KISS_SOLVER,
  *      KISS_M (L-BFGS memory), KISS_POLISH, KISS_ADAM_POLISH,
+ *      KISS_ADAM_EPS, KISS_PENALTY_TARGET,
  *      KISS_SELFTEST, KISS_PROFILE.
  */
 #include <stdio.h>
@@ -41,6 +42,7 @@ static double t_gemm, t_pairs, t_cx;
 static long n_engrad;
 
 static double *Gram, *Cmat, *GX, *rowsum;
+static double adam_eps=1e-8;
 
 static unsigned long long uraw(void){ rs^=rs<<13; rs^=rs>>7; rs^=rs<<17; return rs; }
 static double urand(void){ return (uraw()>>11)*(1.0/9007199254740992.0); }
@@ -548,7 +550,7 @@ static int gd_stage(double *X, double *G, double *B, double *Y, double s, long p
 static int adam_stage(double *X, double *G, double *B, double *M1, double *M2,
                       double s, long maxit, double lr, long *adam_it,
                       double *beta1_pow, double *beta2_pow, double *best){
-    const double beta1=0.9, beta2=0.999, eps=1e-8;
+    const double beta1=0.9, beta2=0.999;
     size_t Nn=(size_t)N*n;
     for(long it=0; it<maxit; it++){
         double mx,f=engrad(X,G,s,&mx);
@@ -568,7 +570,7 @@ static int adam_stage(double *X, double *G, double *B, double *M1, double *M2,
             double g=G[t];
             M1[t]=beta1*M1[t]+(1.0-beta1)*g;
             M2[t]=beta2*M2[t]+(1.0-beta2)*g*g;
-            X[t]-=lr*(M1[t]*c1)/(sqrt(M2[t]*c2)+eps);
+            X[t]-=lr*(M1[t]*c1)/(sqrt(M2[t]*c2)+adam_eps);
         }
         normalize(X);
         (*adam_it)++;
@@ -591,7 +593,7 @@ static int adam_raw_stage(double *X, double *G, double *Z, double *B,
                           double *M1, double *M2, double *norms,
                           double s, long maxit, double lr, long *adam_it,
                           double *beta1_pow, double *beta2_pow, double *best){
-    const double beta1=0.9, beta2=0.999, eps=1e-8;
+    const double beta1=0.9, beta2=0.999;
     size_t Nn=(size_t)N*n;
     for(long it=0;it<maxit;it++){
 #ifdef _OPENMP
@@ -627,7 +629,7 @@ static int adam_raw_stage(double *X, double *G, double *Z, double *B,
             double g=G[t];
             M1[t]=beta1*M1[t]+(1.0-beta1)*g;
             M2[t]=beta2*M2[t]+(1.0-beta2)*g*g;
-            X[t]-=lr*(M1[t]*c1)/(sqrt(M2[t]*c2)+eps);
+            X[t]-=lr*(M1[t]*c1)/(sqrt(M2[t]*c2)+adam_eps);
         }
         (*adam_it)++;
     }
@@ -723,6 +725,9 @@ int main(int argc,char**argv){
     { const char*e=getenv("KISS_INNER"); if(e && atoi(e)>0) inner_cap=atoi(e); }
     int do_polish=1;
     { const char*e=getenv("KISS_POLISH"); if(e) do_polish=atoi(e); }
+    { const char*e=getenv("KISS_ADAM_EPS"); if(e && atof(e)>0) adam_eps=atof(e); }
+    double penalty_target=-1.0;
+    { const char*e=getenv("KISS_PENALTY_TARGET"); if(e && atof(e)>=0.5) penalty_target=atof(e); }
     do_profile = getenv("KISS_PROFILE")!=NULL;
 
     size_t Nn=(size_t)N*n, NN=(size_t)N*N;
@@ -864,11 +869,11 @@ int main(int argc,char**argv){
        !feasible && do_polish && best>0.5){
         fprintf(stderr,"penalty polish from max=%.12g\n", best);
         memcpy(X,B,sizeof(double)*Nn);
-        double t=best;
+        double t=penalty_target>=0.5 ? penalty_target : best;
         double last=best; int noimp=0;
         for(int r=0;r<20 && best>0.5+1e-13;r++){
             int rc=lbfgs_pen_stage(X,G,B,Y,GY,P,t, per>80?per:80, &best);
-            memcpy(X,B,sizeof(double)*Nn);
+            if(penalty_target<0.5) memcpy(X,B,sizeof(double)*Nn);
             double mx, E=engrad_pen(X,NULL,t,&mx);
             fprintf(stderr,"  polish t=%.12g  E=%.3e  max=%.12g\n", t, E, best);
             if(rc==1 || best<=0.5+1e-13){
@@ -878,7 +883,9 @@ int main(int argc,char**argv){
             if(last-best<1e-10) noimp++; else noimp=0;
             last=best;
             if(noimp>=4) break;
-            if(E<1e-18){
+            if(penalty_target>=0.5){
+                t=penalty_target;
+            }else if(E<1e-18){
                 double gap=t-0.5;
                 if(gap<=1e-15) break;
                 t -= gap*0.2 + 1e-12; if(t<0.5) t=0.5;

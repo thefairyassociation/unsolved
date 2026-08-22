@@ -69,6 +69,25 @@ L-BFGS but does not recover the old 0.50519 baseline. A manifold-Adam port of th
 published exponent/LR schedule reached 0.500477238629. See
 `kissing/CALIBRATION_optimizer.md` for exact measurements and caveats.
 
+## Multi-start infrastructure now available
+
+`kissing/lib/multistart_d12_841.py` runs independent one-thread basins across
+the four cores, recomputes every result from its written coordinates, retains
+near-threshold candidates, fingerprints their near-contact Gram structure, and
+checkpoints a JSON summary after every run. Use `--base-end 4` for the measured
+`s=64` screen: over seeds 40..87, the known strong seed 51 was already at
+0.537003 while all 47 other seeds were at least 0.550721. A cutoff of 0.545
+therefore avoids spending the complete 120000-step budget on clearly ordinary
+basins.
+
+`kissing/lib/hypercube_classes.py` covers the signed interaction classes of the
+authors' random hypercube extra point. The class omitted by the deterministic
+seed was tested and was negative; do not spend more CPU simply enumerating its
+2048 tied vertices. The raw-parameter Adam path and its batch-equivalent epsilon
+were also bounded and negative. The next useful compute is more screened
+basins, or the actual GPU-batched authors' implementation—not more polishing of
+the current 0.5006 basin.
+
 ## Traps — please read, two of these already produced false results
 
 1. **Never build `riesz.c` with `-ffast-math` or `-Ofast`.** They imply

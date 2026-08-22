@@ -282,6 +282,8 @@ optimiser's own claim.
 | `lib/verify_exact.py` | exact Gram verifier: Q(sqrt D) via `Fraction`, plus a proven-safe exact integer path |
 | `lib/holes.py` | LP hole search — can a point be added at all? |
 | `lib/opt.c` | penalty-method spherical-code optimiser, adaptive step + basin hopping (`KISS_T` sets the threshold) |
+| `lib/multistart_d12_841.py` | resumable CPU multi-start for the N=841 calibration; independently verifies every output and retains distinct near-threshold basins |
+| `lib/hypercube_classes.py` | writes representatives of the signed interaction classes of the published hypercube extra-point starts |
 | `lib/shake.py`, `lib/shakeloop.sh` | remove k points / add k+1 / re-optimise (the dim-12 840 -> 841 method) |
 | `lib/mis8.c` | max independent set over all `2^8 * C(n,8)` weight-8 vectors, implicit adjacency |
 | `lib/addable.c` | is a weight-8 configuration maximal? |

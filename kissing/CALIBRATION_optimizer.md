@@ -118,3 +118,54 @@ These measurements rule out polishing this particular basin harder and the
 tested small local restarts.  They do not prove that the fixed calibration
 cannot pass: the published search used a large batch of independently perturbed
 basins, while the command here follows one extremely basin-sensitive path.
+
+## Audited CPU multi-start follow-up
+
+The authors' source exposes two details that a faithful continuation needs to
+respect.  First, their Adam parameters are raw coordinates: a normalised view is
+used in the loss, but the parameter itself is not retracted.  Second, the loss
+is averaged over 512 candidates.  The latter changes the effective Adam epsilon
+(`1e-8` in PyTorch is equivalent to `512e-8` after undoing the batch gradient
+scale), so `riesz.c` now exposes `KISS_ADAM_EPS` for controlled fidelity tests.
+The batch-equivalent raw-Adam variant was bounded and negative; it entered a
+different basin but did not approach the manifold-Adam result.
+
+The 4096 possible hypercube extras all tie under the absolute compatibility
+score used by `seed841.py`.  Their *signed* inner-product multiplicities split
+into three fingerprints of sizes 1024, 2048 and 1024; the first and third are
+antipodal, leaving two genuine start types.  `lib/hypercube_classes.py` writes a
+representative of each fingerprint.  The previously uncovered 2048-vertex type
+was tested under both the published raw schedule and the longer manifold
+schedule and fell into the ordinary, much worse basin.
+
+`lib/multistart_d12_841.py` now provides the missing auditable search layer.  It
+runs independent one-thread basins across the available cores, independently
+normalises and recomputes every Gram maximum, retains near-threshold coordinate
+files, fingerprints the near-contact structure, and rewrites a JSON checkpoint
+after every completed run.  It also supports a stage-bounded screen:
+
+```bash
+python3 kissing/lib/multistart_d12_841.py \
+  /tmp/kissing-scratch/cl840_841.txt \
+  --start-seed 40 --runs 24 --workers 4 --threads 1 \
+  --steps 120000 --base-end 4 --keep-threshold 0.545 \
+  --outdir /tmp/kissing-scratch/d12-screen
+```
+
+At the end of `s=64`, seeds 40 through 87 produced 48 independently verified,
+distinct numerical signatures.  Seed 51 alone entered the strong basin at
+`0.5370032857173406`; the other 47 ended in
+`[0.5507207182212339, 0.5567214654646567]`.  This clean separation makes
+`0.545` a measured early-pruning cutoff for this fixed schedule.  A fresh full
+four-thread seed-51 run, including threshold polishing, independently verified
+`0.5006023521255724` with maximum pre-normalisation row-norm error `2.22e-16`.
+It remains above the pass threshold.
+
+Promoting the same screened seed with one thread produced a distinct signature
+but a worse independently verified result, `0.5008491496317989` (row-norm error
+`3.33e-16`). Two final bounded objective changes on that retained checkpoint
+were also negative: high-exponent smooth-max-inner-product Adam did not improve
+the starting maximum at all, and a fixed `KISS_PENALTY_TARGET=0.5` reduced its
+hinge loss only from `8.697e-4` to `8.676e-4` without improving the maximum.
+The fixed-target mode preserves its iterate between rounds; the default adaptive
+threshold behaviour is unchanged.
