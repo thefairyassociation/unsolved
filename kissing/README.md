@@ -282,6 +282,12 @@ optimiser's own claim.
 | `lib/verify_exact.py` | exact Gram verifier: Q(sqrt D) via `Fraction`, plus a proven-safe exact integer path |
 | `lib/holes.py` | LP hole search — can a point be added at all? |
 | `lib/opt.c` | penalty-method spherical-code optimiser, adaptive step + basin hopping (`KISS_T` sets the threshold) |
+| `lib/multistart_d12_841.py` | resumable CPU multi-start for the N=841 calibration; independently verifies every output and retains distinct near-threshold basins |
+| `lib/hypercube_classes.py` | writes representatives of the signed interaction classes of the published hypercube extra-point starts |
+| `lib/FAITHFUL_841.md`, `lib/test_faithful_841.py` | opt-in one-candidate CPU reproduction of the published N=841 schedule, plus the known-witness regression suite |
+| `lib/prepare_841_polish.py` | reproduces the published `%.10f` decimal-Gram, rank-12 eigendecomposition search-to-polish handoff |
+| `lib/analyze_published_841.py`, `STRUCTURAL_841.md` | numerical structure and basin-fingerprint audit of the public 841-point witness |
+| `lib/o4_breadth.py`, `lib/run_o4_faithful_pilot.py`, `lib/verify_o4_841.py` | theorem-valid O(4) breadth seeds, paired faithful pilot runner, and independent read-back verification |
 | `lib/shake.py`, `lib/shakeloop.sh` | remove k points / add k+1 / re-optimise (the dim-12 840 -> 841 method) |
 | `lib/mis8.c` | max independent set over all `2^8 * C(n,8)` weight-8 vectors, implicit adjacency |
 | `lib/addable.c` | is a weight-8 configuration maximal? |
