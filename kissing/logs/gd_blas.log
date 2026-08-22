@@ -1,0 +1,4 @@
+start max=0.77386136448273701  solver=gd  loss=riesz  threads=4  N=841 n=12  openblas_threads=1
+s=0.25  max=0.773193154678  nfev=2163  t=50.0s
+s=0.28  max=0.772454112669  nfev=4325  t=101.4s
+s=0.3136  max=0.771635652817  nfev=6487  t=154.9s
