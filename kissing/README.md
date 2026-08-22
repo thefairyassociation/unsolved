@@ -293,7 +293,8 @@ candidate through the exact verifier before claiming anything:
 * `lib/shakeloop.sh` — dim-13 shake-and-relax from ZE99 (penalty continuation);
 * `lib/rieszloop.sh` — the same with Riesz-energy continuation;
 * `lib/run_fano.sh` — dim-14 enumeration of admissible global codes for the
-  Fano-product design (8000+ codes so far, 0 extensions);
+  Fano-product design (**54664** codes enumerated, **4614** of them giving a
+  consistent coset system, **0** extensions);
 * `lib/calib2.sh` — the dim-12 841 calibration with the line-search optimiser.
 
 A success would appear as a `logs/HIT_*.txt` file; none has been written.

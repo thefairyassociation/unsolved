@@ -31,3 +31,6 @@
 2026-08-22T00:50:00Z | 13 | numeric | shake+continuation from ZE99 with hole-placed re-insertion: best max inner product for N=1155 is 0.5088 (needs <= 0.5)
 2026-08-22T00:50:05Z | 12 | calibration | the SAME machinery seeded with the classical 840 + 1 reaches only ~0.52 for N=841, although 841 is achievable (Takhanov et al. report 0.499999937751). The optimiser here is weaker than the published state of the art, so dim-13 numerical near-misses are NOT evidence against 1155.
 2026-08-22T00:50:10Z | all | bug | riesz.c: pow(r2,-s/2) overflowed to +inf at large s -> NaN configuration -> max inner product read as -2 -> spurious "feasible". Fixed by evaluating (r2/r2min)^(-s/2) with a NaN guard. All reported configurations are checked by the exact verifier, never by the optimiser's own claim.
+2026-08-22T02:00:00Z | 14 | fano50-final | 54664 admissible global codes V enumerated for the Fano-product 49-support design; 4614 give a consistent coset system; ZERO admit a 50th support (which would be 1964 > 1932).
+2026-08-22T02:00:05Z | 13 | numeric-final | best max inner product for N=1155 in R^13 over all shake-and-relax rounds: 0.50875337 (needs <= 0.5). No HIT files written in any search.
+2026-08-22T02:00:10Z | all | RESULT | No record beaten. Best exactly verified: dim 12 = 840, dim 13 = 1154, dim 14 = 1932 - all reproductions of known constructions.
