@@ -1,5 +1,5 @@
 # unsolved
 
-Repo for solving* unsolved math problems
+Repo for solving* kissing numbers
 
 *or making progress.. or no progress, idrk
