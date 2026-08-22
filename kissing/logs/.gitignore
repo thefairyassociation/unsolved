@@ -7,3 +7,6 @@ shake_d13*.log
 d14_fano.log
 d14_gcode.log
 calib*.log
+gd_blas.log
+spend_speedup.log
+headtohead.txt

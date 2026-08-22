@@ -1,1 +1,0 @@
-BLAS+L-BFGS (4 threads): 4 restarts in 420s, best max inner product 0.5111337066917665
