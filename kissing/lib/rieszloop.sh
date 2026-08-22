@@ -9,7 +9,7 @@ for i in $(seq 0 20000); do
   python3 kissing/lib/shake2.py "$base" $k $s $SP/rz_$tag.txt >/dev/null 2>&1
   rows=$(wc -l < $SP/rz_$tag.txt)
   if [ "$rows" != "$N" ]; then continue; fi
-  r=$(./kissing/lib/riesz2 $d $N 30000 $s $SP/rz_$tag.txt 2>/dev/null)
+  r=$(./kissing/lib/riesz2 $d $N 12000 $s $SP/rz_$tag.txt 2>/dev/null)
   best=$(echo "$r" | sed 's/.*best_max_inner=\([0-9.e+-]*\).*/\1/')
   echo "$(date -u +%FT%TZ) k=$k seed=$s $r" >> kissing/logs/riesz_$tag.log
   if awk "BEGIN{exit !($best <= 0.50000001)}"; then

@@ -237,7 +237,7 @@ provably exists, since Takhanov et al. reached 0.499999937751:
 | optimiser | dim 12, N = 841 (solution exists) | dim 13, N = 1155 (unknown) |
 | --- | --- | --- |
 | penalty continuation, crude step rule | ~0.52 | 0.5088 |
-| Riesz continuation + Armijo line search | **0.50519** | (running) |
+| Riesz continuation + Armijo line search | **0.50519** | 0.5107 |
 
 The two columns are close, and the left one is a case where the answer is *yes*.
 So the optimiser here simply cannot resolve the question: a dimension-13
