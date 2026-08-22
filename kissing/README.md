@@ -239,7 +239,7 @@ provably exists, since Takhanov et al. reached 0.499999937751:
 | --- | --- | --- |
 | penalty continuation, crude step rule | ~0.52 | 0.5088 |
 | Riesz continuation + Armijo line search | **0.50519** | 0.5107 |
-| Riesz continuation + BLAS Gram + L-BFGS (this tree) | `lib/run_d12_841.sh` | not re-run |
+| Riesz continuation + BLAS Gram + L-BFGS (this tree) | **0.51123** (inexact inner, 18 jittered restarts; full L-BFGS stalls at 0.534) | not re-run |
 
 The two columns are close, and the left one is a case where the answer is *yes*.
 So the optimiser here simply cannot resolve the question: a dimension-13
@@ -315,13 +315,20 @@ A success would appear as a `logs/HIT_*.txt` file; none has been written.
 
 ## If someone picks this up
 
-Reproduce the dim-12 840+1 calibration (BLAS + L-BFGS Riesz optimiser):
+Reproduce the dim-12 840+1 calibration (BLAS + L-BFGS Riesz optimiser).
+Best so far on this tree: **max inner product 0.51123** (seed 116, `KISS_INNER=16`
+`KISS_JIT=0.03`, hole extra). Does not yet match Takhanov’s 0.4999999 or the
+previous GD calibration of 0.50519; fully converging L-BFGS at each exponent
+is worse (0.534) — keep the inner solve inexact.
 
 ```bash
-make -C kissing/lib riesz2
-bash kissing/lib/run_d12_841.sh
-# or: KISS_JIT=0 OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 \
-#     ./kissing/lib/riesz2 12 841 80000 1 kissing/logs/cl840_841.txt
+make -C kissing/lib riesz2          # needs gcc, OpenBLAS, OpenMP
+bash kissing/lib/selftest.sh        # mis8 / gcode / clique / engrad (~20s)
+bash kissing/lib/run_d12_841.sh     # 4 cores, ~15s per restart
+# equivalent:
+#   python3 kissing/lib/seed841.py kissing/logs/cl840_841.txt --mode hole
+#   KISS_JIT=0.03 KISS_INNER=16 OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 \
+#     ./kissing/lib/riesz2 12 841 80000 116 kissing/logs/cl840_841.txt
 ```
 
 `kissing/lib/selftest.sh` rebuilds `mis8` / `gcode` / `clique` checks (~1 min).
