@@ -239,6 +239,7 @@ provably exists, since Takhanov et al. reached 0.499999937751:
 | --- | --- | --- |
 | penalty continuation, crude step rule | ~0.52 | 0.5088 |
 | Riesz continuation + Armijo line search | **0.50519** | 0.5107 |
+| Riesz continuation + BLAS Gram + L-BFGS (this tree) | `lib/run_d12_841.sh` | not re-run |
 
 The two columns are close, and the left one is a case where the answer is *yes*.
 So the optimiser here simply cannot resolve the question: a dimension-13
@@ -282,6 +283,7 @@ optimiser's own claim.
 | `lib/verify_exact.py` | exact Gram verifier: Q(sqrt D) via `Fraction`, plus a proven-safe exact integer path |
 | `lib/holes.py` | LP hole search — can a point be added at all? |
 | `lib/opt.c` | penalty-method spherical-code optimiser, adaptive step + basin hopping (`KISS_T` sets the threshold) |
+| `lib/riesz.c` (`riesz2`) | Riesz-energy continuation; BLAS `dgemm` Gram (one eval per step), OpenMP pair loop, L-BFGS inner solve |
 | `lib/shake.py`, `lib/shakeloop.sh` | remove k points / add k+1 / re-optimise (the dim-12 840 -> 841 method) |
 | `lib/mis8.c` | max independent set over all `2^8 * C(n,8)` weight-8 vectors, implicit adjacency |
 | `lib/addable.c` | is a weight-8 configuration maximal? |
@@ -313,13 +315,24 @@ A success would appear as a `logs/HIT_*.txt` file; none has been written.
 
 ## If someone picks this up
 
+Reproduce the dim-12 840+1 calibration (BLAS + L-BFGS Riesz optimiser):
+
+```bash
+make -C kissing/lib riesz2
+bash kissing/lib/run_d12_841.sh
+# or: KISS_JIT=0 OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 \
+#     ./kissing/lib/riesz2 12 841 80000 1 kissing/logs/cl840_841.txt
+```
+
+`kissing/lib/selftest.sh` rebuilds `mis8` / `gcode` / `clique` checks (~1 min).
+
 The three things that look most worth attacking next, in order:
 
-1. **A better optimiser.** The calibration above is the honest bottleneck: the
-   published dim-12 method reaches 0.4999999 on a case where this code reaches
-   0.52. An L-BFGS inner solve (rather than gradient descent with a backtracking
-   line search) plus many more restarts would make the dim-13 numerical evidence
-   worth something either way.
+1. **A better optimiser.** The inner solve is now L-BFGS with a BLAS Gram and
+   OpenMP on the pair loop (`lib/riesz.c`). The remaining gap vs Takhanov et al.
+   on dim-12 841 is about the basin (structured O(4) deformation of the 48-system,
+   extra-point choice, more restarts), not the O(N²n) loops. Re-run dim-13 only
+   after the dim-12 seed is driven below 1/2.
 2. **Dimension 14 with `dim V = 6`.** 25 supports would give 1600 weight-8
    vectors and 1964 > 1932. Structural cliques of up to 72 supports exist for
    minimum-weight-6 codes; what collapses is the F_2 coset system. A smarter
