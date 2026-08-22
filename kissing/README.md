@@ -212,6 +212,38 @@ three equations sum to `0 = 1`. At most 2 per row and per column survive — 14
 supports, 896 + 364 = 1260 < 1932. Bigger sign codes cost supports faster than
 they gain.
 
+## Numerical searches, and an honest calibration
+
+Two continuation schemes are implemented and run against dimension 13:
+
+* `lib/opt.c` (`opt2`) — penalty method `sum max(0, g_ij - t)^2` with the
+  threshold `t` annealed down towards 1/2 each time the energy is driven to zero;
+* `lib/riesz.c` — Riesz-energy continuation, minimising `sum ||x_i - x_j||^{-s}`
+  for a geometrically increasing exponent starting near the logarithmic energy.
+  This is the scheme Takhanov–Assylbekov–Yun used to get 841 from the classical
+  840 in dimension 12.
+
+Both are driven by `lib/shake2.py`, which removes k points and re-inserts k+1 at
+the **deepest holes** of what remains (found by LP) rather than at random; that
+change alone moved the dimension-13 results from max inner product 0.69 to 0.51.
+
+Best reached so far for 1155 points in R^13: **0.5088** (needs <= 0.5).
+
+**But the calibration says not to read much into that.** Seeding the same
+machinery with the classical dimension-12 840 plus one extra point — a case where
+a solution provably exists, since Takhanov et al. reached 0.499999937751 — it
+gets only about **0.52**. So the optimiser here is materially weaker than the
+published state of the art, and a dimension-13 near-miss at 0.5088 is **not**
+evidence that 1155 points do not exist. The structural results above stand on
+their own; the numerical ones do not.
+
+A related bug worth recording: `pow(r2, -s/2)` overflows to `+inf` at large
+exponents, turning the configuration into `NaN`, whereupon the maximum inner
+product reads as `-2` and the run reports **feasible**. Two runs did exactly that
+before the rescaled evaluation `(r2/r2min)^(-s/2)` and a `NaN` guard were added.
+Every configuration reported here is checked by the exact verifier, not by the
+optimiser's own claim.
+
 ## Families tried, and why they were dropped
 
 | # | family | verdict |

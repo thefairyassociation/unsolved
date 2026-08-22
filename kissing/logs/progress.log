@@ -28,3 +28,6 @@
 2026-08-21T23:26:58Z | 14 | gcode-search | seed=204 dimV=5 supports=13 weight8=416 total=780 (below 1932)
 2026-08-21T23:30:36Z | 14 | gcode-search | seed=205 dimV=5 supports=12 weight8=384 total=748 (below 1932)
 2026-08-21T23:32:42Z | 14 | gcode-search | seed=205 dimV=5 supports=13 weight8=416 total=780 (below 1932)
+2026-08-22T00:50:00Z | 13 | numeric | shake+continuation from ZE99 with hole-placed re-insertion: best max inner product for N=1155 is 0.5088 (needs <= 0.5)
+2026-08-22T00:50:05Z | 12 | calibration | the SAME machinery seeded with the classical 840 + 1 reaches only ~0.52 for N=841, although 841 is achievable (Takhanov et al. report 0.499999937751). The optimiser here is weaker than the published state of the art, so dim-13 numerical near-misses are NOT evidence against 1155.
+2026-08-22T00:50:10Z | all | bug | riesz.c: pow(r2,-s/2) overflowed to +inf at large s -> NaN configuration -> max inner product read as -2 -> spurious "feasible". Fixed by evaluating (r2/r2min)^(-s/2) with a NaN guard. All reported configurations are checked by the exact verifier, never by the optimiser's own claim.

@@ -80,8 +80,16 @@ int main(int argc,char**argv){
         size_t c=0; while(c<(size_t)N*n && fscanf(f,"%lf",&X[c])==1) c++; fclose(f); }
     normalize(X);
     double best=maxinner(X); memcpy(B,X,sizeof(double)*(size_t)N*n);
-    long per = steps/40 > 50 ? steps/40 : 50;
-    for(double s=2.0; s<40000.0; s*=1.45){
+    /* continuation schedule: start near the logarithmic energy (s -> 0) and
+     * raise the exponent slowly; KISS_S0/KISS_SMUL/KISS_SMAX override it. */
+    double s0=0.25, smul=1.12, smax=60000.0;
+    { const char*e;
+      if((e=getenv("KISS_S0"))) s0=atof(e);
+      if((e=getenv("KISS_SMUL"))) smul=atof(e);
+      if((e=getenv("KISS_SMAX"))) smax=atof(e); }
+    int nstage=1; for(double q=s0;q<smax;q*=smul) nstage++;
+    long per = steps/nstage > 40 ? steps/nstage : 40;
+    for(double s=s0; s<smax; s*=smul){
         double lr=0.02, Eprev=1e300;
         for(long it=0; it<per; it++){
             double mx,E=engrad(X,G,s,&mx);
