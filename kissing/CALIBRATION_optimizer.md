@@ -73,3 +73,48 @@ from candidates already below 0.501. See the
 
 No binary or float configuration is committed, and no numerical result here is
 claimed as an exact kissing configuration.
+
+## Follow-up bounded tests (2026-08-22)
+
+The calibration still does **not** pass.  A fresh four-thread run of the fixed
+seed, with the existing threshold-penalty phase disabled so the Adam basin could
+be measured on its own, ended at `0.5007033607244914`:
+
+```bash
+KISS_POLISH=0 KISS_THREADS=4 OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 \
+  ./kissing/lib/riesz2 12 841 120000 51 \
+  /tmp/kissing-scratch/cl840_841.txt
+```
+
+The written 841 by 12 output was finite and, after independent row
+normalisation and a fresh NumPy Gram product, reproduced
+`0.5007033607244914`.  The largest row-norm error before that normalisation was
+`3.33e-16`.
+
+The cheap follow-up hypotheses were bounded and negative:
+
+| experiment | independently recomputed max inner product / cutoff |
+| --- | ---: |
+| five ultra-high Riesz exponents, 20,000 Adam steps each, LR scale 100 | `0.5006379823191830` |
+| local `1e-4` kick, resume published tail at `s=1024` | `0.5006912110923703` |
+| local `1e-3` kick, resume published tail at `s=1024` | `0.5006912214674577` |
+| local `1e-3` kick, resume earlier at `s=256` | `0.5007043564409575` |
+| exact structured seed with no jitter, stopped at `s=64` | `0.552076735372` |
+| jitter `0.01`, stopped at `s=64` | `0.553212520746` |
+| jitter `0.05`, stopped after dominated `s=32` | `0.574265236111` |
+| three-thread reduction order, stopped at `s=512` | `0.506491838310` |
+| two-thread reduction order, stopped at `s=512` | `0.506449770014` |
+| four-thread retry, stopped at `s=512` | `0.506348517437` |
+
+The five-stage high-exponent run used the exponent sequence in the authors'
+`polish_841.py`, but deliberately short stages and a larger learning-rate scale
+to test whether this checkpoint had room to move.  It improved almost entirely
+in the first stage (`0.500638863699`) and plateaued at
+`0.500637982319`; it did not approach `0.5`.  All completed local-tail outputs
+in the table were independently recomputed from their coordinate files.  No
+internal `feasible` flag was used as evidence.
+
+These measurements rule out polishing this particular basin harder and the
+tested small local restarts.  They do not prove that the fixed calibration
+cannot pass: the published search used a large batch of independently perturbed
+basins, while the command here follows one extremely basin-sensitive path.

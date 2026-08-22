@@ -20,7 +20,8 @@
  *   gcc -O3 -fopenmp -o riesz riesz.c -lopenblas -lm
  *
  * Env: KISS_JIT, KISS_S0, KISS_SMUL, KISS_SMAX, KISS_THREADS, KISS_SOLVER,
- *      KISS_M (L-BFGS memory), KISS_POLISH, KISS_SELFTEST, KISS_PROFILE.
+ *      KISS_M (L-BFGS memory), KISS_POLISH, KISS_ADAM_POLISH,
+ *      KISS_SELFTEST, KISS_PROFILE.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -581,6 +582,73 @@ static int adam_stage(double *X, double *G, double *B, double *M1, double *M2,
     return 0;
 }
 
+/* Faithful port of search_841_riesz.py's search phase.  Its Adam parameters
+ * are unconstrained: the loss normalises a view Z=X/||X||, but opt.step()
+ * updates raw X and does not retract it.  The chain-rule gradient is
+ * (I-ZZ^T) grad_Z / ||X||.  This differs materially from manifold Adam because
+ * Adam's coordinatewise preconditioner is not rotation/radial invariant. */
+static int adam_raw_stage(double *X, double *G, double *Z, double *B,
+                          double *M1, double *M2, double *norms,
+                          double s, long maxit, double lr, long *adam_it,
+                          double *beta1_pow, double *beta2_pow, double *best){
+    const double beta1=0.9, beta2=0.999, eps=1e-8;
+    size_t Nn=(size_t)N*n;
+    for(long it=0;it<maxit;it++){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for(int i=0;i<N;i++){
+            const double *x=X+(size_t)i*n; double *z=Z+(size_t)i*n;
+            double q=0; for(int k=0;k<n;k++) q+=x[k]*x[k];
+            double r=sqrt(q); if(!(r>1e-12)) r=1e-12;
+            norms[i]=r; for(int k=0;k<n;k++) z[k]=x[k]/r;
+        }
+        double mx,f=engrad(Z,G,s,&mx);
+        if(f<0) return -1;
+        if(mx<*best-1e-13){
+            *best=mx; memcpy(B,Z,sizeof(double)*Nn);
+            if(*best<=0.5+1e-13) return 1;
+        }
+        project_tangent(Z,G);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for(int i=0;i<N;i++){
+            double invr=1.0/norms[i], *g=G+(size_t)i*n;
+            for(int k=0;k<n;k++) g[k]*=invr;
+        }
+        *beta1_pow *= beta1;
+        *beta2_pow *= beta2;
+        double c1=1.0/(1.0-*beta1_pow), c2=1.0/(1.0-*beta2_pow);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for(size_t t=0;t<Nn;t++){
+            double g=G[t];
+            M1[t]=beta1*M1[t]+(1.0-beta1)*g;
+            M2[t]=beta2*M2[t]+(1.0-beta2)*g*g;
+            X[t]-=lr*(M1[t]*c1)/(sqrt(M2[t]*c2)+eps);
+        }
+        (*adam_it)++;
+    }
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+    for(int i=0;i<N;i++){
+        const double *x=X+(size_t)i*n; double *z=Z+(size_t)i*n;
+        double q=0; for(int k=0;k<n;k++) q+=x[k]*x[k];
+        double r=sqrt(q); if(!(r>1e-12)) r=1e-12;
+        for(int k=0;k<n;k++) z[k]=x[k]/r;
+    }
+    double mx,f=engrad(Z,NULL,s,&mx);
+    if(f<0) return -1;
+    if(mx<*best-1e-13){
+        *best=mx; memcpy(B,Z,sizeof(double)*Nn);
+        if(*best<=0.5+1e-13) return 1;
+    }
+    return 0;
+}
+
 /* Penalty L-BFGS (same two-loop, Armijo on E_t). */
 static int lbfgs_pen_stage(double *X, double *G, double *B, double *Y, double *GY, double *P,
                            double t, long maxit, double *best){
@@ -669,8 +737,9 @@ int main(int argc,char**argv){
            *GY=malloc(sizeof(double)*Nn), *P=malloc(sizeof(double)*Nn);
     double *AdamM=solver==SOLVER_ADAM ? calloc(Nn,sizeof(double)) : NULL;
     double *AdamV=solver==SOLVER_ADAM ? calloc(Nn,sizeof(double)) : NULL;
+    double *AdamNorm=solver==SOLVER_ADAM ? malloc(sizeof(double)*(size_t)N) : NULL;
     if(!Gram||!Cmat||!X||!Smem||!P){ fprintf(stderr,"oom\n"); return 1; }
-    if(solver==SOLVER_ADAM && (!AdamM||!AdamV)){ fprintf(stderr,"oom\n"); return 1; }
+    if(solver==SOLVER_ADAM && (!AdamM||!AdamV||!AdamNorm)){ fprintf(stderr,"oom\n"); return 1; }
 
     for(size_t i=0;i<Nn;i++) X[i]=nrand();
     if(argc>5){ FILE*f=fopen(argv[5],"r"); if(!f){perror("seed");return 1;}
@@ -708,16 +777,32 @@ int main(int argc,char**argv){
     double t_run=wall();
     int feasible=0;
 
-    if(solver==SOLVER_ADAM){
+    int adam_polish_only=getenv("KISS_ADAM_POLISH_ONLY")!=NULL;
+    int adam_polish=getenv("KISS_ADAM_POLISH")!=NULL || adam_polish_only;
+    int penalty_only=getenv("KISS_PENALTY_ONLY")!=NULL;
+    int adam_raw=getenv("KISS_ADAM_RAW")!=NULL;
+    int adam_base_start=0;
+    int adam_base_end=13;
+    { const char*e=getenv("KISS_ADAM_BASE_START"); if(e && atoi(e)>=0 && atoi(e)<13) adam_base_start=atoi(e); }
+    { const char*e=getenv("KISS_ADAM_BASE_END"); if(e && atoi(e)>0 && atoi(e)<=13) adam_base_end=atoi(e); }
+    if(solver==SOLVER_ADAM && !adam_polish_only && !penalty_only){
         static const double adam_s[]={8,16,32,64,128,256,512,1024,2048,4096,10000,20000,40000};
         static const long adam_base[]={1000,1000,1000,2000,2000,2000,2000,4000,4000,4000,4000,4000,4000};
         static const double adam_lr[]={.005,.003,.002,.001,.0005,.0002,.0001,.00005,.00001,.00001,.000005,.000001,.000001};
         const long published_total=35000;
         long ait=0; double b1pow=1.0,b2pow=1.0;
-        for(size_t stage=0;stage<sizeof(adam_s)/sizeof(adam_s[0]);stage++){
+        for(size_t stage=(size_t)adam_base_start;
+            stage<sizeof(adam_s)/sizeof(adam_s[0]) && stage<(size_t)adam_base_end;
+            stage++){
             long inner=(long)llround((double)adam_base[stage]*steps/published_total);
             if(inner<1) inner=1;
-            int rc=adam_stage(X,G,B,AdamM,AdamV,adam_s[stage],inner,adam_lr[stage],
+            int rc;
+            if(adam_raw)
+                rc=adam_raw_stage(X,G,Y,B,AdamM,AdamV,AdamNorm,
+                                  adam_s[stage],inner,adam_lr[stage],
+                                  &ait,&b1pow,&b2pow,&best);
+            else
+                rc=adam_stage(X,G,B,AdamM,AdamV,adam_s[stage],inner,adam_lr[stage],
                               &ait,&b1pow,&b2pow,&best);
             if(rc<0){ fprintf(stderr,"numerical breakdown at s=%.0f\n",adam_s[stage]); break; }
             fprintf(stderr,"s=%.4g  max=%.12g  nfev=%ld  t=%.1fs\n",
@@ -727,7 +812,7 @@ int main(int argc,char**argv){
                 feasible=1; break;
             }
         }
-    }else{
+    }else if(solver!=SOLVER_ADAM){
         for(double s=s0; s<smax; s*=smul){
             long inner = solver==SOLVER_LBFGS && per>inner_cap ? inner_cap : per;
             int rc;
@@ -743,7 +828,40 @@ int main(int argc,char**argv){
         }
     }
 
-    if(!feasible && do_polish && best>0.5){
+    if(solver==SOLVER_ADAM && adam_polish && !penalty_only &&
+       !feasible && do_polish && best>0.5){
+        /* Ultra-high-exponent polishing schedule from the authors' published
+         * polish_841.py.  It starts fresh Adam moments from the best candidate.
+         * Environment controls make checkpointed, bounded calibration runs
+         * reproducible without changing the fixed N=841 seed benchmark. */
+        static const double polish_s[]={10240000,20240000,40240000,80240000,160240000};
+        static const double polish_lr[]={5e-10,2e-10,1e-10,5e-11,2e-11};
+        long polish_steps=150000;
+        int polish_stages=5;
+        double polish_lr_scale=1.0;
+        { const char*e=getenv("KISS_ADAM_POLISH_STEPS"); if(e && atol(e)>0) polish_steps=atol(e); }
+        { const char*e=getenv("KISS_ADAM_POLISH_STAGES"); if(e && atoi(e)>0 && atoi(e)<=5) polish_stages=atoi(e); }
+        { const char*e=getenv("KISS_ADAM_POLISH_LR_SCALE"); if(e && atof(e)>0) polish_lr_scale=atof(e); }
+        fprintf(stderr,"adam polish from max=%.12g  steps/stage=%ld  stages=%d  lr_scale=%.4g\n",
+                best,polish_steps,polish_stages,polish_lr_scale);
+        memcpy(X,B,sizeof(double)*Nn);
+        memset(AdamM,0,sizeof(double)*Nn); memset(AdamV,0,sizeof(double)*Nn);
+        long ait=0; double b1pow=1.0,b2pow=1.0;
+        for(int stage=0;stage<polish_stages;stage++){
+            int rc=adam_stage(X,G,B,AdamM,AdamV,polish_s[stage],polish_steps,
+                              polish_lr[stage]*polish_lr_scale,&ait,&b1pow,&b2pow,&best);
+            if(rc<0){ fprintf(stderr,"numerical breakdown in Adam polish at s=%.0f\n",polish_s[stage]); break; }
+            fprintf(stderr,"  polish s=%.4g  max=%.12g  nfev=%ld  t=%.1fs\n",
+                    polish_s[stage],best,n_engrad,wall()-t_run);
+            if(rc==1 || best<=0.5+1e-13){
+                fprintf(stderr,"FEASIBLE Adam polish max=%.17g\n",best);
+                feasible=1; break;
+            }
+        }
+    }
+
+    if((solver!=SOLVER_ADAM || penalty_only || !adam_polish) &&
+       !feasible && do_polish && best>0.5){
         fprintf(stderr,"penalty polish from max=%.12g\n", best);
         memcpy(X,B,sizeof(double)*Nn);
         double t=best;
