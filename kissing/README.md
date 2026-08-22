@@ -371,3 +371,27 @@ closed from every side tried: the 1568 weight-8 vectors are maximal
 50th support over 127190 enumerated codes, `dim V = 6` caps at 9 supports, and
 per-support codes buy nothing. Beating 1932 needs a different shell or a
 genuinely different construction, not a better search inside this one.
+
+## Session briefing
+
+`.claude/hooks/session-start.sh` runs on every web session: it restores the
+container (Python packages, C tools, float seeds), resumes the searches unless
+`KISSING_NO_RESUME=1`, and then prints `kissing/lib/briefing.sh` on stdout, which
+a SessionStart hook puts into the model's context. So a fresh session opens
+already knowing:
+
+* whether any search wrote a `HIT_*.txt` (i.e. claimed a feasible configuration
+  — always verify it before believing it, two false ones have been produced);
+* which remote branches carry commits that have **not** been reviewed yet;
+* the standing records, the best verified counts, and the calibration to beat.
+
+`kissing/.reviewed` records `branch sha` for every branch tip already looked at,
+so branches whose content was imported long ago stop showing up as noise. After
+reviewing a branch, append its tip:
+
+```bash
+echo "origin/<branch> $(git rev-parse --short origin/<branch>)" >> kissing/.reviewed
+```
+
+Run `kissing/lib/briefing.sh` by hand at any time; it is read-only apart from the
+`git fetch`.

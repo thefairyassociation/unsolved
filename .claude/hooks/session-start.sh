@@ -47,3 +47,8 @@ if [ "${KISSING_NO_RESUME:-}" != "1" ] && ! pgrep -f rieszloop.sh >/dev/null 2>&
   nohup ./kissing/lib/run_fano.sh >/dev/null 2>&1 &
   echo "resumed 3 dim-13 search streams + the dim-14 enumeration" >&2
 fi
+
+# 5. Briefing on stdout.  SessionStart hook stdout is added to the session
+#    context, so the next session opens already knowing what landed on other
+#    branches and whether any search claimed a feasible configuration.
+./kissing/lib/briefing.sh 2>/dev/null || true
