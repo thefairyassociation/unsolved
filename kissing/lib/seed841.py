@@ -37,14 +37,23 @@ def best_hypercube_extra(X: np.ndarray) -> np.ndarray:
 
 
 def hole_extra(X: np.ndarray, seed: int = 0) -> np.ndarray:
-    sys.path.insert(0, str(ROOT / "kissing" / "lib"))
-    from holes import max_norm_over_P
+    try:
+        sys.path.insert(0, str(ROOT / "kissing" / "lib"))
+        from holes import max_norm_over_P
 
-    _, u = max_norm_over_P(X, starts=40, seed=seed)
-    if u is None:
-        rng = np.random.default_rng(seed)
-        u = rng.standard_normal(X.shape[1])
-    return u / np.linalg.norm(u)
+        _, u = max_norm_over_P(X, starts=40, seed=seed)
+        if u is not None:
+            return u / np.linalg.norm(u)
+    except Exception:
+        pass
+    rng = np.random.default_rng(seed)
+    x = rng.standard_normal(X.shape[1])
+    x /= np.linalg.norm(x)
+    for _ in range(1200):
+        ips = X @ x
+        x = x - 0.04 * X[int(np.argmax(ips))]
+        x /= np.linalg.norm(x)
+    return x
 
 
 def main() -> None:

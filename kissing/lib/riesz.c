@@ -76,10 +76,19 @@ static void gram_dgemm(const double *X){
                 N, N, n, 1.0, X, n, X, n, 0.0, Gram, N);
 }
 
+static int loss_ip; /* KISS_LOSS=ip: minimise smooth-max inner product */
+
+static double engrad_riesz(const double *X, double *G, double s, double *mx);
+static double engrad_ip(const double *X, double *G, double s, double *mx);
+
+static double engrad(const double *X, double *G, double s, double *mx){
+    return loss_ip ? engrad_ip(X,G,s,mx) : engrad_riesz(X,G,s,mx);
+}
+
 /* Log-energy LOGSCALE = log sum_{i<j} r_ij^{-s} and, if G!=NULL, its Euclidean
  * gradient (already divided so it matches d log E / dX of the original code).
  * One Gram evaluation.  Returns LOGSCALE, or -1 on NaN. */
-static double engrad(const double *X, double *G, double s, double *mx){
+static double engrad_riesz(const double *X, double *G, double s, double *mx){
     double t0=0, t1=0;
     if(do_profile) t0=wall();
     gram_dgemm(X);
@@ -170,6 +179,66 @@ static double engrad(const double *X, double *G, double s, double *mx){
             for(int k=0;k<n;k++) g[k]=gx[k]-rs_*x[k];
         }
         cblas_dscal((size_t)N*n, 1.0/E, G, 1);
+        if(do_profile){ t1=wall(); t_cx+=t1-t0; }
+    }
+    return LOGSCALE;
+}
+
+/* Smooth max of off-diagonal inner products: L = (1/s) log sum_{i<j} exp(s g_ij).
+ * As s -> infinity this is exactly the max inner product.  One dgemm. */
+static double engrad_ip(const double *X, double *G, double s, double *mx){
+    double t0=0, t1=0;
+    if(do_profile) t0=wall();
+    gram_dgemm(X);
+    if(do_profile){ t1=wall(); t_gemm+=t1-t0; t0=t1; }
+
+    double m=-2;
+#ifdef _OPENMP
+#pragma omp parallel
+    {
+        double lm=-2;
+#pragma omp for nowait schedule(static)
+        for(int i=0;i<N;i++){
+            const double *gi=Gram+(size_t)i*N;
+            for(int j=i+1;j<N;j++) if(gi[j]>lm) lm=gi[j];
+        }
+#pragma omp critical
+        { if(lm>m) m=lm; }
+    }
+#else
+    for(int i=0;i<N;i++){
+        const double *gi=Gram+(size_t)i*N;
+        for(int j=i+1;j<N;j++) if(gi[j]>m) m=gi[j];
+    }
+#endif
+    *mx=m;
+    if(!(m>-1.5)) return -1.0;
+    n_engrad++;
+
+    int want_grad=G!=NULL;
+    if(want_grad) memset(Cmat,0,sizeof(double)*(size_t)N*N);
+    double Z=0, ss=(s>1e-12?s:1e-12);
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:Z) schedule(static)
+#endif
+    for(int i=0;i<N;i++){
+        const double *gi=Gram+(size_t)i*N;
+        double *ci=want_grad ? Cmat+(size_t)i*N : NULL;
+        for(int j=i+1;j<N;j++){
+            double a=ss*(gi[j]-m);
+            if(a<-40) continue;
+            double e=exp(a);
+            Z+=e;
+            if(want_grad){ ci[j]=e; Cmat[(size_t)j*N+i]=e; }
+        }
+    }
+    if(do_profile){ t1=wall(); t_pairs+=t1-t0; t0=t1; }
+    if(!(Z>0)) return -1.0;
+    LOGSCALE = m + log(Z)/ss; /* ≈ max inner product */
+    if(want_grad){
+        cblas_dscal((size_t)N*N, 1.0/Z, Cmat, 1);
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                    N, n, N, 1.0, Cmat, N, X, n, 0.0, G, n);
         if(do_profile){ t1=wall(); t_cx+=t1-t0; }
     }
     return LOGSCALE;
@@ -537,7 +606,10 @@ int main(int argc,char**argv){
 
     int use_lbfgs=1;
     { const char*e=getenv("KISS_SOLVER"); if(e && !strcmp(e,"gd")) use_lbfgs=0; }
+    { const char*e=getenv("KISS_LOSS"); if(e && !strcmp(e,"ip")) loss_ip=1; }
     { const char*e=getenv("KISS_M"); if(e){ int m=atoi(e); if(m>=3 && m<=MEMMAX) MEM=m; } }
+    int inner_cap=16; /* inexact continuation; large caps walk into worse basins */
+    { const char*e=getenv("KISS_INNER"); if(e && atoi(e)>0) inner_cap=atoi(e); }
     int do_polish=1;
     { const char*e=getenv("KISS_POLISH"); if(e) do_polish=atoi(e); }
     do_profile = getenv("KISS_PROFILE")!=NULL;
@@ -564,10 +636,11 @@ int main(int argc,char**argv){
     double mx0, f0=engrad(X,NULL,1.0,&mx0);
     (void)f0;
     double best=mx0; memcpy(B,X,sizeof(double)*Nn);
-    fprintf(stderr,"start max=%.17g  solver=%s  threads=%d  N=%d n=%d  openblas_threads=1\n",
-            best, use_lbfgs?"lbfgs":"gd", nthreads, N, n);
+    fprintf(stderr,"start max=%.17g  solver=%s  loss=%s  threads=%d  N=%d n=%d  openblas_threads=1\n",
+            best, use_lbfgs?"lbfgs":"gd", loss_ip?"ip":"riesz", nthreads, N, n);
 
     double s0=0.25, smul=1.12, smax=60000.0;
+    if(loss_ip){ s0=2.0; smul=1.18; smax=8000.0; }
     { const char*e;
       if((e=getenv("KISS_S0"))) s0=atof(e);
       if((e=getenv("KISS_SMUL"))) smul=atof(e);
@@ -578,7 +651,7 @@ int main(int argc,char**argv){
     int feasible=0;
 
     for(double s=s0; s<smax; s*=smul){
-        long inner = use_lbfgs && per>200 ? 200 : per;
+        long inner = use_lbfgs && per>inner_cap ? inner_cap : per;
         int rc;
         if(use_lbfgs) rc=lbfgs_stage(X,G,B,Y,GY,P,s,inner,&best);
         else rc=gd_stage(X,G,B,Y,s,per,&best);
